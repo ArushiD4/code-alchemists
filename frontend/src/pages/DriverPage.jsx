@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
+import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface Patient {
     id: string;
@@ -19,9 +21,19 @@ interface Patient {
     docId: string; // The Firestore document ID to allow easy updates
 }
 
+// MapTiler API Key
+const MAPTILER_KEY = 'wGAcU5kZfoTSw5VEWzdM';
+const DESTINATION_LNG = 73.8826;
+const DESTINATION_LAT = 18.5308;
+
 export default function DriverPage() {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
+    // Navigation State
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [driverLocation, setDriverLocation] = useState<{ lng: number, lat: number } | null>(null);
+    const [routeGeoJson, setRouteGeoJson] = useState<any>(null);
 
     // Firestore Subscription
     useEffect(() => {
@@ -34,10 +46,6 @@ export default function DriverPage() {
             }));
 
             // SORTING LOGIC
-            // Tier 1: RED or Critical
-            // Tier 2: YELLOW or Urgent
-            // Tier 3: GREEN or Routine
-            // Tier 4: BLACK
             const getTier = (p: Patient) => {
                 if (p.triage === 'RED' || p.acuity === 'Critical') return 1;
                 if (p.triage === 'YELLOW' || p.acuity === 'Urgent') return 2;
@@ -51,7 +59,7 @@ export default function DriverPage() {
                 const tierB = getTier(b);
 
                 if (tierA !== tierB) {
-                    return tierA - tierB; // Ascending tier (1 is first)
+                    return tierA - tierB;
                 }
 
                 // Same tier, sort chronologically
@@ -68,6 +76,41 @@ export default function DriverPage() {
 
         return () => unsubscribe();
     }, []);
+
+    // Geolocation & Route Fetching
+    useEffect(() => {
+        if (isNavigating) {
+            const fetchRoute = async (lng: number, lat: number) => {
+                try {
+                    const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${lng},${lat};${DESTINATION_LNG},${DESTINATION_LAT}?overview=full&geometries=geojson`);
+                    const data = await response.json();
+
+                    if (data.routes && data.routes.length > 0) {
+                        setRouteGeoJson({
+                            type: 'Feature',
+                            properties: {},
+                            geometry: data.routes[0].geometry
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error fetching route:", error);
+                    toast.error("Failed to fetch route");
+                }
+            };
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { longitude, latitude } = position.coords;
+                    setDriverLocation({ lng: longitude, lat: latitude });
+                    fetchRoute(longitude, latitude);
+                },
+                (error) => {
+                    console.error("Geolocation error:", error);
+                    toast.error("Failed to get current location. Ensure location services are enabled.");
+                }
+            );
+        }
+    }, [isNavigating]);
 
     const getBorderColor = (p: Patient) => {
         if (p.triage === 'RED' || p.acuity === 'Critical') return 'border-red-500';
@@ -91,14 +134,109 @@ export default function DriverPage() {
         try {
             const patientRef = doc(db, 'patients', selectedPatient.docId);
             await updateDoc(patientRef, { status: 'loaded' });
-            toast.success('Patient Loaded successfully!', { id: notificationId });
+            toast.success('Patient Loaded. Initiating Navigation...', { id: notificationId });
             setSelectedPatient(null);
+            setIsNavigating(true); // TRIGGER MAP VIEW
         } catch (error) {
             console.error("Error updating patient status:", error);
             toast.error("Failed to load patient", { id: notificationId });
         }
     };
 
+    const completeTransport = async () => {
+        if (!selectedPatient) return;
+        const notificationId = toast.loading('Finalizing payload...');
+        try {
+            const patientRef = doc(db, 'patients', selectedPatient.docId);
+            await updateDoc(patientRef, { status: 'delivered' });
+
+            toast.success('Transport Complete. Ready for next dispatch.', {
+                id: notificationId,
+                style: { background: '#1e293b', color: '#f8fafc' },
+                icon: '🚑'
+            });
+            setIsNavigating(false);
+            setRouteGeoJson(null);
+            setDriverLocation(null);
+            setSelectedPatient(null);
+        } catch (error) {
+            console.error("Error completing transport:", error);
+            toast.error("Failed to complete transport", { id: notificationId });
+        }
+    };
+
+    // ==========================================
+    // MAP RENDERING VIEW (isNavigating === true)
+    // ==========================================
+    if (isNavigating) {
+        return (
+            <div className="flex-1 flex flex-col w-full h-[100dvh] bg-slate-900 relative">
+
+                {/* Header Overlay */}
+                <div className="absolute top-0 left-0 w-full p-4 z-10 bg-gradient-to-b from-slate-950/90 to-transparent flex items-center justify-between">
+                    <div>
+                        <h2 className="text-white font-black tracking-widest text-xl drop-shadow-md">EMERGENCY TRANSPORT</h2>
+                        <p className="text-blue-400 font-bold text-sm tracking-wider uppercase">En Route to Ruby Hall Clinic</p>
+                    </div>
+                </div>
+
+                {/* Maplibre Canvas */}
+                <div className="flex-1 w-full h-full relative">
+                    {!driverLocation ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-0">
+                            <span className="w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin mb-4"></span>
+                            <p className="text-slate-400 font-bold uppercase tracking-widest text-sm text-center px-6">Acquiring GPS Signal...</p>
+                        </div>
+                    ) : (
+                        <Map
+                            initialViewState={{
+                                longitude: driverLocation.lng,
+                                latitude: driverLocation.lat,
+                                zoom: 13,
+                                pitch: 45 // Add a slight tilt for a modern navigation feel
+                            }}
+                            mapStyle={`https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`}
+                        >
+                            {/* The Route Path */}
+                            {routeGeoJson && (
+                                <Source id="route" type="geojson" data={routeGeoJson}>
+                                    <Layer
+                                        id="route-layer"
+                                        type="line"
+                                        paint={{
+                                            'line-color': '#3b82f6',
+                                            'line-width': 6,
+                                            'line-opacity': 0.8
+                                        }}
+                                    />
+                                </Source>
+                            )}
+
+                            {/* Driver Origin Marker */}
+                            <Marker longitude={driverLocation.lng} latitude={driverLocation.lat} color="#3b82f6" />
+
+                            {/* Destination Marker */}
+                            <Marker longitude={DESTINATION_LNG} latitude={DESTINATION_LAT} color="#ef4444" />
+                        </Map>
+                    )}
+                </div>
+
+                {/* Footer Action */}
+                <div className="absolute bottom-0 left-0 w-full p-4 z-10 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent safe-bottom">
+                    <button
+                        onClick={completeTransport}
+                        className="w-full py-6 rounded-2xl bg-green-500 hover:bg-green-400 active:bg-green-600 active:scale-[0.98] transition-all flex flex-col items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.4)] border border-green-400"
+                    >
+                        <span className="text-2xl font-black text-slate-950 tracking-widest uppercase">Transport Complete</span>
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ==========================================
+    // DISPATCH QUEUE VIEW (isNavigating === false)
+    // ==========================================
     return (
         <div className="flex-1 flex flex-col w-full min-h-[100dvh] bg-slate-950 text-slate-50 relative">
 
@@ -164,7 +302,7 @@ export default function DriverPage() {
             </div>
 
             {/* FULL SCREEN ACTION MODAL */}
-            {selectedPatient && (
+            {selectedPatient && !isNavigating && (
                 <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col animation-fade-in pb-env safe-bottom overflow-y-auto">
 
                     <div className="flex items-center justify-between p-4 sticky top-0 bg-slate-950/90 z-10 border-b border-slate-800">
