@@ -1,5 +1,6 @@
 # code-alchemists
 26002 - Emergency Response Systems
+
 Delayed Emergency Medical Response in Urban and Semi-Urban India Timely emergency medical response is critical in saving lives during accidents, cardiac arrests, trauma incidents, and other life-threatening conditions. However, in many Indian cities and semi-urban regions, emergency response systems face significant challenges including traffic congestion, lack of real-time coordination, uneven ambulance distribution, and limited visibility into hospital capacity.
 Timely emergency medical response is critical in saving lives during accidents, cardiac arrests, trauma incidents, and other life-threatening conditions. However, in many Indian cities and semi-urban regions, emergency response systems face significant challenges including traffic congestion, lack of real-time coordination, uneven ambulance distribution, and limited visibility into hospital capacity.
 
@@ -18,5 +19,3 @@ Inadequate preparedness for surge situations (disasters, mass accidents, public 
 
 Challenge Statement Design a scalable and intelligent emergency response framework that improves response time, optimizes resource allocation, and enhances coordination between emergency services and healthcare facilities under real-world constraints.
 Design a scalable and intelligent emergency response framework that improves response time, optimizes resource allocation, and enhances coordination between emergency services and healthcare facilities under real-world constraints.
-
-Official Case Study Specification
