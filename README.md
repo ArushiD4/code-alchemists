@@ -1,21 +1,73 @@
-# code-alchemists
-26002 - Emergency Response Systems
+# React + TypeScript + Vite
 
-Delayed Emergency Medical Response in Urban and Semi-Urban India Timely emergency medical response is critical in saving lives during accidents, cardiac arrests, trauma incidents, and other life-threatening conditions. However, in many Indian cities and semi-urban regions, emergency response systems face significant challenges including traffic congestion, lack of real-time coordination, uneven ambulance distribution, and limited visibility into hospital capacity.
-Timely emergency medical response is critical in saving lives during accidents, cardiac arrests, trauma incidents, and other life-threatening conditions. However, in many Indian cities and semi-urban regions, emergency response systems face significant challenges including traffic congestion, lack of real-time coordination, uneven ambulance distribution, and limited visibility into hospital capacity.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Delays in patient triage and ambulance dispatch often result in critical loss of treatment time, especially during peak traffic hours, large public gatherings, natural disasters, or multi-casualty incidents. Additionally, emergency call centers may struggle to prioritize cases efficiently due to limited structured decision-support mechanisms.
+Currently, two official plugins are available:
 
-Key systemic gaps include: * Lack of dynamic coordination between emergency callers, ambulances, and hospitals * Limited real-time traffic and route optimization integration * Absence of structured prioritization during high-load scenarios * Poor interoperability between emergency services and healthcare facilities * Inadequate preparedness for surge situations (disasters, mass accidents, public events)
-Lack of dynamic coordination between emergency callers, ambulances, and hospitals
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-Limited real-time traffic and route optimization integration
+## React Compiler
 
-Absence of structured prioritization during high-load scenarios
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-Poor interoperability between emergency services and healthcare facilities
+## Expanding the ESLint configuration
 
-Inadequate preparedness for surge situations (disasters, mass accidents, public events)
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-Challenge Statement Design a scalable and intelligent emergency response framework that improves response time, optimizes resource allocation, and enhances coordination between emergency services and healthcare facilities under real-world constraints.
-Design a scalable and intelligent emergency response framework that improves response time, optimizes resource allocation, and enhances coordination between emergency services and healthcare facilities under real-world constraints.
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
