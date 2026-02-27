@@ -1,0 +1,25 @@
+# FRONTEND
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# BACKEND
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+Pipfile.lock
+
+# SECRETS
+.env
+.env.*
+*.pem
+secrets.json
+
+# OS & EDITOR FILES
+.DS_Store
+.vscode/
+.idea/
