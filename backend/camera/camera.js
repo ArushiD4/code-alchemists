@@ -1,3 +1,5 @@
+// pulse: minor maintenance / readability update
+
 const video = document.getElementById("video")
 const canvas = document.getElementById("canvas")
 const output = document.getElementById("output")
@@ -6,7 +8,7 @@ const sizeInfo = document.getElementById("sizeInfo")
 const startBtn = document.getElementById("startCamera")
 const captureBtn = document.getElementById("capture")
 
-let stream = null
+let stream = null // camera stream reference
 
 // Start Camera
 startBtn.onclick = async () => {
@@ -23,7 +25,7 @@ startBtn.onclick = async () => {
 // Compress function (< 100KB)
 function compressToUnder100KB(canvas, callback) {
   const MAX_SIZE = 100 * 1024
-  let quality = 0.9
+  let quality = 0.9 // initial JPEG quality
 
   function compress() {
     const dataURL = canvas.toDataURL("image/jpeg", quality)
