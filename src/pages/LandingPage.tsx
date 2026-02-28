@@ -30,7 +30,7 @@ export default function LandingPage() {
                         <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
                     </div>
                     <span className="font-black text-lg tracking-tight text-slate-100">
-                        Snap<span className="text-red-500">&amp;</span>Sort
+                        Emergency<span className="text-red-500">&amp;</span>Response
                     </span>
                 </div>
             </nav>
@@ -108,7 +108,7 @@ export default function LandingPage() {
                             icon: <Camera className="w-7 h-7 text-yellow-400" />,
                             accent: 'border-yellow-500/30 bg-yellow-500/5',
                             step: '02',
-                            title: 'Snap & Sort',
+                            title: 'Emergency Response',
                             desc: 'First responders take a quick photo. Patients are visually prioritized in real-time.',
                         },
                         {

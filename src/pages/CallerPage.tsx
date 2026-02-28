@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Phone, AlertTriangle } from 'lucide-react';
+import { Bot, Phone, AlertTriangle } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 // ============================================================
 // TRIAGE SYSTEM PROMPT — feed this to your LLM backend
@@ -84,7 +86,6 @@ export default function CallerPage() {
     const [messages, setMessages] = useState<Message[]>([
         { role: 'ai', text: QUESTIONS[0] },
     ]);
-    const [inputText, setInputText] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
@@ -98,20 +99,35 @@ export default function CallerPage() {
         const trimmed = text.trim();
         if (!trimmed || isTyping || triageResult) return;
 
-        setInputText('');
-
         // 1. Append user's message immediately
         setMessages(prev => [...prev, { role: 'user', text: trimmed }]);
         setIsTyping(true);
 
         // 2. Simulate AI "thinking" for 1 second
-        setTimeout(() => {
+        setTimeout(async () => {
             const result = evaluateStep(currentStep, trimmed);
 
             if (result) {
                 // End state reached — show result
                 setTriageResult(result);
                 setIsTyping(false);
+
+                // Push triage result to Firestore
+                const now = new Date();
+                const hhmmss = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0') + now.getSeconds().toString().padStart(2, '0');
+                const pId = `CAL-${hhmmss}`;
+                try {
+                    await addDoc(collection(db, 'patients'), {
+                        id: pId,
+                        triage: result.triage_category,
+                        status: 'waiting',
+                        patientLat: 18.5074,
+                        patientLng: 73.8077,
+                        timestamp: serverTimestamp(),
+                    });
+                } catch (err) {
+                    console.error('Failed to push triage to Firestore:', err);
+                }
             } else {
                 // Advance to next question
                 const nextStep = currentStep + 1;
@@ -123,11 +139,6 @@ export default function CallerPage() {
     };
 
     const handleQuickReply = (val: string) => handleSendMessage(val);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleSendMessage(inputText);
-    };
 
     const isDisabled = isTyping || !!triageResult;
 
@@ -156,24 +167,30 @@ export default function CallerPage() {
 
             {/* ── MESSAGE HISTORY ── */}
             <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-4">
-                {messages.map((msg, i) => (
-                    <div
-                        key={i}
-                        className={`flex items-end gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                    >
-                        {msg.role === 'ai' && (
-                            <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow-sm">
-                                <Bot className="w-4 h-4 text-blue-400" />
-                            </div>
-                        )}
-                        <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-md ${msg.role === 'ai'
-                            ? 'bg-slate-800 text-slate-100 rounded-bl-sm border border-slate-700'
-                            : 'bg-blue-600 text-white rounded-br-sm'}`}
+                {messages.map((msg, i) => {
+                    if (typeof msg.text === 'string' && msg.text.includes('"triage_category"')) {
+                        return null;
+                    }
+
+                    return (
+                        <div
+                            key={i}
+                            className={`flex items-end gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                         >
-                            {msg.text}
+                            {msg.role === 'ai' && (
+                                <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow-sm">
+                                    <Bot className="w-4 h-4 text-blue-400" />
+                                </div>
+                            )}
+                            <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-md ${msg.role === 'ai'
+                                ? 'bg-slate-800 text-slate-100 rounded-bl-sm border border-slate-700'
+                                : 'bg-blue-600 text-white rounded-br-sm'}`}
+                            >
+                                {msg.text}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
 
                 {/* Typing indicator */}
                 {isTyping && (
@@ -226,7 +243,7 @@ export default function CallerPage() {
                 <div ref={bottomRef} />
             </div>
 
-            {/* ── QUICK REPLIES + INPUT ── */}
+            {/* ── QUICK REPLIES ── */}
             <div className="flex-none px-4 pt-2 pb-4 flex flex-col gap-3 border-t border-slate-800 bg-slate-950/95 backdrop-blur-md">
                 <div className="flex gap-2">
                     <button
@@ -244,23 +261,6 @@ export default function CallerPage() {
                         No
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="flex items-center gap-2">
-                    <input
-                        type="text"
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Or type your answer..."
-                        disabled={isDisabled}
-                        className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-40 transition-all"
-                    />
-                    <button
-                        type="submit"
-                        disabled={!inputText.trim() || isDisabled}
-                        className="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shadow-[0_0_16px_rgba(37,99,235,0.3)]"
-                    >
-                        <Send className="w-5 h-5" />
-                    </button>
-                </form>
 
                 {triageResult && (
                     <button

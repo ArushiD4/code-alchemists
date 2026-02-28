@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 type MciColor = 'RED' | 'YELLOW' | 'GREEN';
 
 export default function ParamedicPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [pin, setPin] = useState('');
     const [isMciMode, setIsMciMode] = useState(false);
 
     // State for MCI Native Camera
@@ -168,8 +170,13 @@ export default function ParamedicPage() {
         const notificationId = toast.loading('Submitting report...');
 
         try {
+            const now = new Date();
+            const hhmmss = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0') + now.getSeconds().toString().padStart(2, '0');
+            const pId = `${isMciMode ? 'MCI' : 'NOR'}-${hhmmss}`;
+
             await addDoc(collection(db, 'patients'), {
                 ...vitals,
+                id: pId,
                 type: 'standard',
                 status: 'waiting',
                 timestamp: serverTimestamp()
@@ -184,6 +191,42 @@ export default function ParamedicPage() {
             setIsUploading(false);
         }
     };
+
+    if (!isLoggedIn) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center w-full min-h-[100dvh] bg-slate-950 text-slate-50 px-6">
+                <div className="w-full max-w-sm flex flex-col gap-6">
+                    <div className="text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-red-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(220,38,38,0.4)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="11" x="5" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                        </div>
+                        <h1 className="text-3xl font-black tracking-tight text-white">Paramedic Portal</h1>
+                        <p className="text-slate-400 text-sm mt-1">Enter your PIN to continue</p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={pin}
+                            onChange={(e) => setPin(e.target.value)}
+                            placeholder="PIN"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-center text-2xl font-black tracking-[0.5em] text-slate-100 placeholder:text-slate-600 placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                        />
+                        <button
+                            onClick={() => { if (pin === '9999') setIsLoggedIn(true); else { setPin(''); } }}
+                            className="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-black text-lg tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(220,38,38,0.3)] border border-red-500"
+                        >
+                            Unlock
+                        </button>
+                        {pin.length > 0 && pin !== '9999' && (
+                            <p className="text-red-400 text-center text-sm font-semibold">Incorrect PIN. Try again.</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`flex-1 flex flex-col w-full min-h-[100dvh] transition-colors duration-300 ${isMciMode ? 'bg-black text-white' : 'bg-slate-50 text-slate-900'}`}>

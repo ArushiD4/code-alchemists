@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // ============================================================
@@ -108,6 +108,8 @@ const getBadgeColor = (p: Patient) => {
 // COMPONENT
 // ============================================================
 export default function DriverPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [pin, setPin] = useState('');
     const [patients, setPatients] = useState<Patient[]>([]);
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
@@ -298,6 +300,45 @@ export default function DriverPage() {
     const hospitalPos: LatLng = { lat: nearestHospital.lat, lng: nearestHospital.lng };
 
     // ============================================================
+    // PIN LOGIN SCREEN
+    // ============================================================
+    if (!isLoggedIn) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center w-full min-h-[100dvh] bg-slate-950 text-slate-50 px-6">
+                <div className="w-full max-w-sm flex flex-col gap-6">
+                    <div className="text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(37,99,235,0.4)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="11" x="5" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                        </div>
+                        <h1 className="text-3xl font-black tracking-tight text-white">Driver Portal</h1>
+                        <p className="text-slate-400 text-sm mt-1">Enter your PIN to continue</p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={pin}
+                            onChange={(e) => setPin(e.target.value)}
+                            placeholder="PIN"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-center text-2xl font-black tracking-[0.5em] text-slate-100 placeholder:text-slate-600 placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        />
+                        <button
+                            onClick={() => { if (pin === '1234') setIsLoggedIn(true); else { setPin(''); } }}
+                            className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-black text-lg tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] border border-blue-500"
+                        >
+                            Unlock
+                        </button>
+                        {pin.length > 0 && pin !== '1234' && (
+                            <p className="text-red-400 text-center text-sm font-semibold">Incorrect PIN. Try again.</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ============================================================
     // MAP VIEW
     // ============================================================
     if (isNavigating) {
@@ -342,14 +383,22 @@ export default function DriverPage() {
                             {navigationPhase === 1 ? (
                                 <>
                                     {driverLocation && (
-                                        <CircleMarker center={[driverLocation.lat, driverLocation.lng]} radius={10} pathOptions={{ color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1 }} />
+                                        <CircleMarker center={[driverLocation.lat, driverLocation.lng]} radius={10} pathOptions={{ color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1 }}>
+                                            <Tooltip permanent direction="top"><span className="bg-slate-900 text-blue-300 font-bold text-xs px-2 py-0.5 rounded">Ambulance</span></Tooltip>
+                                        </CircleMarker>
                                     )}
-                                    <CircleMarker center={[patientPos.lat, patientPos.lng]} radius={12} pathOptions={{ color: '#fff', weight: 3, fillColor: '#ef4444', fillOpacity: 1 }} />
+                                    <CircleMarker center={[patientPos.lat, patientPos.lng]} radius={12} pathOptions={{ color: '#fff', weight: 3, fillColor: '#ef4444', fillOpacity: 1 }}>
+                                        <Tooltip permanent direction="top"><span className="bg-slate-900 text-red-300 font-bold text-xs px-2 py-0.5 rounded">Patient</span></Tooltip>
+                                    </CircleMarker>
                                 </>
                             ) : (
                                 <>
-                                    <CircleMarker center={[patientPos.lat, patientPos.lng]} radius={10} pathOptions={{ color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1 }} />
-                                    <CircleMarker center={[hospitalPos.lat, hospitalPos.lng]} radius={12} pathOptions={{ color: '#fff', weight: 3, fillColor: '#ef4444', fillOpacity: 1 }} />
+                                    <CircleMarker center={[patientPos.lat, patientPos.lng]} radius={10} pathOptions={{ color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1 }}>
+                                        <Tooltip permanent direction="top"><span className="bg-slate-900 text-blue-300 font-bold text-xs px-2 py-0.5 rounded">Patient</span></Tooltip>
+                                    </CircleMarker>
+                                    <CircleMarker center={[hospitalPos.lat, hospitalPos.lng]} radius={12} pathOptions={{ color: '#fff', weight: 3, fillColor: '#ef4444', fillOpacity: 1 }}>
+                                        <Tooltip permanent direction="top"><span className="bg-slate-900 text-green-300 font-bold text-xs px-2 py-0.5 rounded">Hospital</span></Tooltip>
+                                    </CircleMarker>
                                 </>
                             )}
                         </MapContainer>
@@ -417,18 +466,26 @@ export default function DriverPage() {
                                     </>
                                 ) : (
                                     <div className="flex-1 flex flex-col p-4">
-                                        <p className="font-extrabold text-white tracking-widest text-lg mb-3 truncate">{p.name || 'UNKNOWN'}</p>
-                                        <div className="grid grid-cols-2 gap-y-2 gap-x-2 text-sm mb-3">
-                                            <div>
-                                                <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">HR</p>
-                                                <p className="font-bold text-slate-200">{p.hr} <span className="text-[10px] text-slate-500">BPM</span></p>
+                                        <p className="font-extrabold text-white tracking-widest text-lg mb-3 truncate">{p.name || p.id}</p>
+                                        {p.hr ? (
+                                            <div className="grid grid-cols-2 gap-y-2 gap-x-2 text-sm mb-3">
+                                                <div>
+                                                    <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">HR</p>
+                                                    <p className="font-bold text-slate-200">{p.hr} <span className="text-[10px] text-slate-500">BPM</span></p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">BP</p>
+                                                    <p className="font-bold text-slate-200">{p.bp}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">BP</p>
-                                                <p className="font-bold text-slate-200">{p.bp}</p>
+                                        ) : (
+                                            <div className="flex-1 flex flex-col items-center justify-center py-2 text-slate-500 mb-2 border border-dashed border-slate-700 rounded-xl bg-slate-900/50">
+                                                <p className="text-[11px] font-bold uppercase tracking-widest">Awaiting Dispatch</p>
+                                                <p className="text-[9px] font-medium tracking-wide mt-0.5">Reported by Bystander</p>
                                             </div>
-                                        </div>
-                                        <div className={`mt-auto w-full py-1.5 rounded text-center text-xs font-black tracking-widest uppercase ${getBadgeColor(p)}`}>{p.acuity}</div>
+                                        )}
+                                        <div className={`mt-auto w-full py-1.5 rounded text-center text-xs font-black tracking-widest uppercase ${getBadgeColor(p)}`}>{p.triage || p.acuity} Alert</div>
+
                                     </div>
                                 )}
                             </div>
@@ -463,23 +520,32 @@ export default function DriverPage() {
                             </div>
                         ) : (
                             <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800 mb-5">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-800 pb-2">Vitals</h3>
-                                <div className="grid grid-cols-2 gap-5">
-                                    <div>
-                                        <p className="text-xs uppercase text-slate-500 font-bold tracking-wider mb-1">Heart Rate</p>
-                                        <p className="text-2xl font-black text-slate-100">{selectedPatient.hr} <span className="text-sm text-slate-500 font-normal">BPM</span></p>
+                                {selectedPatient.hr ? (
+                                    <>
+                                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-800 pb-2">Vitals</h3>
+                                        <div className="grid grid-cols-2 gap-5">
+                                            <div>
+                                                <p className="text-xs uppercase text-slate-500 font-bold tracking-wider mb-1">Heart Rate</p>
+                                                <p className="text-2xl font-black text-slate-100">{selectedPatient.hr} <span className="text-sm text-slate-500 font-normal">BPM</span></p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs uppercase text-slate-500 font-bold tracking-wider mb-1">SpO2</p>
+                                                <p className="text-2xl font-black text-slate-100">{selectedPatient.spo2} <span className="text-sm text-slate-500 font-normal">%</span></p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-xs uppercase text-slate-500 font-bold tracking-wider mb-1">Blood Pressure</p>
+                                                <p className="text-2xl font-black text-slate-100">{selectedPatient.bp} <span className="text-sm text-slate-500 font-normal">mmHg</span></p>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-6 text-slate-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2 opacity-50"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                        <p className="text-xs font-bold uppercase tracking-widest">No Vitals Available. Reported by a Bystander.</p>
                                     </div>
-                                    <div>
-                                        <p className="text-xs uppercase text-slate-500 font-bold tracking-wider mb-1">SpO2</p>
-                                        <p className="text-2xl font-black text-slate-100">{selectedPatient.spo2} <span className="text-sm text-slate-500 font-normal">%</span></p>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-xs uppercase text-slate-500 font-bold tracking-wider mb-1">Blood Pressure</p>
-                                        <p className="text-2xl font-black text-slate-100">{selectedPatient.bp} <span className="text-sm text-slate-500 font-normal">mmHg</span></p>
-                                    </div>
-                                </div>
+                                )}
                                 {selectedPatient.notes && (
-                                    <div className="mt-4 pt-4 border-t border-slate-800">
+                                    <div className={`mt-4 pt-4 border-t border-slate-800 ${!selectedPatient.hr ? 'border-t-0 mt-0 pt-0' : ''}`}>
                                         <p className="text-xs uppercase text-slate-500 font-bold tracking-wider mb-2">Notes</p>
                                         <p className="text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800/50 text-sm">{selectedPatient.notes}</p>
                                     </div>

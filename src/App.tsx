@@ -17,7 +17,7 @@ function Header() {
         <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center shadow-[0_0_15px_rgba(220,38,38,0.4)]">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M12 2v20" /><path d="M2 12h20" /></svg>
         </div>
-        <span className="font-bold text-lg tracking-wide text-slate-100">Rescue<span className="text-red-500">App</span></span>
+        <span className="font-bold text-lg tracking-wide text-slate-100">Emergency<span className="text-red-500">Response</span></span>
       </div>
       <nav className="flex gap-2 sm:gap-4">
         <Link
