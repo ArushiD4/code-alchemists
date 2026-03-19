@@ -1,32 +1,52 @@
 26002 - EMERGENCY RESPONSE SYSTEM 
 -----------------------------------------
-BY CODE ALCHEMISTS
+**TEAM Code Alchemists:**
 
-TEAM LEADER: Arushi Dabli
+**Team Leader**: Arushi Dabli
 
-TEAM MEMBER 1: Maithili Gosavi
+**Team Member 1**: Maithili Gosavi 
 
-TEAM MEMBER 2: Siddharth Bhadawale
+**Team Member 2**: Siddharth Bhadawale
 
-TO ACCESS PARAMEDIC PORTAL, ENTER '9999' AS PIN and
-TO ACCESS DRIVER PORTAL, ENTER '1234' AS PIN
-----------------------------------------
+**Event**: Navonmesh 2026 (24-Hour National Hackathon) 
 
-Delayed Emergency Medical Response in Urban and Semi-Urban India Timely emergency medical response is critical in saving lives during accidents, cardiac arrests, trauma incidents, and other life-threatening conditions. However, in many Indian cities and semi-urban regions, emergency response systems face significant challenges including traffic congestion, lack of real-time coordination, uneven ambulance distribution, and limited visibility into hospital capacity.
-Timely emergency medical response is critical in saving lives during accidents, cardiac arrests, trauma incidents, and other life-threatening conditions. However, in many Indian cities and semi-urban regions, emergency response systems face significant challenges including traffic congestion, lack of real-time coordination, uneven ambulance distribution, and limited visibility into hospital capacity.
+**Result:** 22nd Place out of +300 initial teams 
 
-Delays in patient triage and ambulance dispatch often result in critical loss of treatment time, especially during peak traffic hours, large public gatherings, natural disasters, or multi-casualty incidents. Additionally, emergency call centers may struggle to prioritize cases efficiently due to limited structured decision-support mechanisms.
+#### TO ACCESS PARAMEDIC PORTAL, ENTER '9999' AS PIN and TO ACCESS DRIVER PORTAL, ENTER '1234' AS PIN
 
-Key systemic gaps include: * Lack of dynamic coordination between emergency callers, ambulances, and hospitals * Limited real-time traffic and route optimization integration * Absence of structured prioritization during high-load scenarios * Poor interoperability between emergency services and healthcare facilities * Inadequate preparedness for surge situations (disasters, mass accidents, public events)
-Lack of dynamic coordination between emergency callers, ambulances, and hospitals
-
-Limited real-time traffic and route optimization integration
-
-Absence of structured prioritization during high-load scenarios
-
-Poor interoperability between emergency services and healthcare facilities
-
-Inadequate preparedness for surge situations (disasters, mass accidents, public events)
-
-Challenge Statement Design a scalable and intelligent emergency response framework that improves response time, optimizes resource allocation, and enhances coordination between emergency services and healthcare facilities under real-world constraints.
+## Challenge Statement:
 Design a scalable and intelligent emergency response framework that improves response time, optimizes resource allocation, and enhances coordination between emergency services and healthcare facilities under real-world constraints.
+## Problem:
+During mass casualty incidents (MCIs), dispatch systems often become a bottleneck, causing delays in ambulance routing and disorganized patient triage.
+## The Solution
+A Progressive Web App (PWA) that automates medical triage and streamlines real-time communication between civilians, paramedics, and ambulance drivers.
+
+## Technical Stack
+
+- **Frontend:** React, Vite, Tailwind CSS
+
+- **Backend:** Firebase Firestore (Real-time data sync)
+
+- **Mapping:** React-Leaflet, OSRM API
+
+- **Deployment:** Firebase Hosting
+
+## The Team & Contributions
+
+### Arushi Dabli
+- **Architecture:** Engineered the React/Vite core and state management.
+
+- **Integration:** Built the Firebase Firestore data pipeline for real-time dispatching.
+
+- **DevOps:** Managed the cloud deployment and production build configuration.
+
+
+### Maithili Gosavi
+- **Frontend Development**: Built some key UI pages using React and Tailwind CSS with a focus on responsiveness and usability.
+
+- **Presentation Support**: Assisted in designing and structuring the project PPT.
+
+### Siddharth Bhadawale 
+- **Demonstration**: Created a clear and engaging demo video showcasing the application workflow and key features.
+
+- **Presentation**: Designed and structured the project PPT for effective communication of the solution.
